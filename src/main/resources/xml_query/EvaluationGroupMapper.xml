@@ -1,0 +1,27 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.EvaluationGroupMapper">
+    <select id="getAllEvaluationGroups"  resultMap="result" parameterType="map">
+        SELECT
+            eg.id,
+            eg.from_id as fromId,
+            eg.group_id as groupId,
+            cg.name as groupName,
+            eg.lesson_id as lessonId,
+            eg.preparation as preparation,
+            eg.implementation as implementation,
+            eg.presentation as presentation,
+            eg.production as production,
+            eg.create_at as createAt,
+            eg.update_at as updateAt
+        FROM evaluation_groups eg
+        LEFT JOIN class_groups cg ON cg.id = eg.group_id
+        WHERE eg.lesson_id = #{lesson_id}
+        AND eg.from_id = #{from_id}
+        ORDER BY cg.name ASC
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.EvaluationGroupDto" autoMapping="true">
+    </resultMap>
+</mapper>

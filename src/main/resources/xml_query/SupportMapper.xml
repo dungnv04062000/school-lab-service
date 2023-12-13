@@ -1,0 +1,70 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.SupportMapper">
+    <select id="getAllSupportsRequest"  resultMap="result" parameterType="map">
+        SELECT
+            id,
+            from_id as fromId,
+            name,
+            phone_number as phoneNumber,
+            email,
+            priority,
+            create_at as createAt,
+            status,
+               title,
+            content,
+               response,
+            update_at as updateAt
+        FROM supports
+        WHERE 1=1
+        <if test="user_id != null">
+            AND from_id = #{user_id}
+        </if>
+        <if test="priority != null">
+            AND priority = #{priority}
+        </if>
+        <if test="create_at_from != null">
+            AND create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="type_sort == 'DESC'">
+            ORDER BY create_at DESC
+        </if>
+        <if test="type_sort == 'ASC'">
+            ORDER BY create_at ASC
+        </if>
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.SupportUserDto" autoMapping="true">
+    </resultMap>
+
+    <select id="countAllSupportsRequest"  resultType="java.lang.Integer" parameterType="map">
+        SELECT
+        COUNT(id)
+        FROM supports
+        WHERE 1=1
+        <if test="user_id != null">
+            AND from_id = #{user_id}
+        </if>
+        <if test="priority != null">
+            AND priority = #{priority}
+        </if>
+        <if test="create_at_from != null">
+            AND create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+</mapper>

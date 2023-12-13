@@ -1,0 +1,226 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.LessonMapper">
+    <select id="getAllLessons"  resultMap="result" parameterType="map">
+        SELECT
+        l.id,
+        l.title,
+        l.class_id as classId,
+        c.name as className,
+        se.id as semesterId,
+        se.name as semesterName,
+        se.year as [year],
+        s.name as subjectName,
+        l.subject_id as subjectId,
+        l.level_id as levelId,
+        ll.name as levelName,
+        l.context as context,
+        l.goal as goal,
+        l.stem_knowledge_id as stemKnowledgeId,
+        sk.science as science,
+        sk.technology as technology,
+        sk.engineering as engineering,
+        sk.mathematics as mathematics,
+        l.evaluation_criteria_id as evaluationCriteriaId,
+        ec.preparation as preparation,
+        ec.implementation as implementation,
+        ec.presentation as presentation,
+        ec.production as production,
+        l.create_by as createBy,
+        u.first_name + ' ' + u.last_name as createByFullName,
+        l.create_at as createAt,
+        l.end_at as endAt,
+        l.update_at as updateAt,
+        l.status as status,
+        l.attachment_url as attachmentUrl
+        FROM lessons l
+        LEFT JOIN users u ON u.id = l.create_by
+        LEFT JOIN classes c ON c.id = l.class_id
+        LEFT JOIN semesters se ON se.id = c.semester_id
+        LEFT JOIN subjects s ON s.id = l.subject_id
+        LEFT JOIN lesson_levels ll ON ll.id = l.level_id
+        LEFT JOIN stem_knowledge sk on sk.id = l.stem_knowledge_id
+        LEFT JOIN evaluation_criterias ec on ec.id = l.evaluation_criteria_id
+        WHERE 1=1
+        <if test="class_id != null">
+            AND l.class_id = #{class_id}
+        </if>
+        <if test="teacher_id != null">
+            AND l.create_by = #{teacher_id}
+        </if>
+        <if test="subject_id != null">
+            AND l.subject_id = #{subject_id}
+        </if>
+        <if test="level_id != null">
+            AND l.level_id = #{level_id}
+        </if>
+
+        <if test="create_at_from != null">
+            AND l.create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND l.create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+        <if test="title != null">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        ORDER BY l.create_at DESC
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.LessonDto" autoMapping="true">
+    </resultMap>
+
+    <select id="countAllLessons"  resultType="java.lang.Integer" parameterType="map">
+        SELECT
+        COUNT(l.id)
+        FROM lessons l
+        WHERE 1=1
+        <if test="class_id != null">
+            AND l.class_id = #{class_id}
+        </if>
+        <if test="teacher_id != null">
+            AND l.create_by = #{teacher_id}
+        </if>
+        <if test="level_id != null">
+            AND l.level_id = #{level_id}
+        </if>
+        <if test="subject_id != null">
+            AND l.subject_id = #{subject_id}
+        </if>
+        <if test="title != null">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <if test="create_at_from != null">
+            AND l.create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND l.create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+    </select>
+
+    <select id="getAllLessonsForStudent"  resultMap="result2" parameterType="map">
+        SELECT
+        l.id,
+        l.title,
+        l.class_id as classId,
+        c.name as className,
+        se.id as semesterId,
+        se.name as semesterName,
+        se.year as [year],
+        s.name as subjectName,
+        l.subject_id as subjectId,
+        l.level_id as levelId,
+        ll.name as levelName,
+        l.context as context,
+        l.goal as goal,
+        l.stem_knowledge_id as stemKnowledgeId,
+        sk.science as science,
+        sk.technology as technology,
+        sk.engineering as engineering,
+        sk.mathematics as mathematics,
+        l.evaluation_criteria_id as evaluationCriteriaId,
+        ec.preparation as preparation,
+        ec.implementation as implementation,
+        ec.presentation as presentation,
+        ec.production as production,
+        l.create_by as createBy,
+        u.first_name + ' ' + u.last_name as createByFullName,
+        l.create_at as createAt,
+        l.end_at as endAt,
+        l.update_at as updateAt,
+        l.status as status,
+        l.attachment_url as attachmentUrl
+        FROM lessons l
+        LEFT JOIN users u ON u.id = l.create_by
+        LEFT JOIN classes c ON c.id = l.class_id
+        LEFT JOIN semesters se ON se.id = c.semester_id
+        LEFT JOIN subjects s ON s.id = l.subject_id
+        LEFT JOIN lesson_levels ll ON ll.id = l.level_id
+        LEFT JOIN stem_knowledge sk on sk.id = l.stem_knowledge_id
+        LEFT JOIN evaluation_criterias ec on ec.id = l.evaluation_criteria_id
+        WHERE l.subject_id = #{subject_id}
+        AND l.class_id = #{class_id}
+        <if test="level_id != null">
+            AND l.level_id = #{level_id}
+        </if>
+        <if test="create_at_from != null">
+            AND l.create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND l.create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+        <if test="title != null">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        ORDER BY l.create_at DESC
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <resultMap id="result2" type="com.schoollab.dto.LessonDto" autoMapping="true">
+    </resultMap>
+
+    <select id="countAllLessonsForStudent"  resultType="java.lang.Integer" parameterType="map">
+        SELECT
+        COUNT(l.id)
+        FROM lessons l
+        WHERE l.class_id = #{class_id}
+        AND l.subject_id = #{subject_id}
+        <if test="level_id != null">
+            AND l.level_id = #{level_id}
+        </if>
+        <if test="create_at_from != null">
+            AND l.create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND l.create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+        <if test="title != null">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+    </select>
+
+    <select id="getOne" resultType="com.schoollab.dto.LessonDto" parameterType="map">
+        SELECT
+            l.id,
+            l.title,
+            l.class_id as classId,
+            c.name as className,
+            se.id as semesterId,
+            se.name as semesterName,
+            se.year as [year],
+            s.name as subjectName,
+            l.subject_id as subjectId,
+            l.level_id as levelId,
+            ll.name as levelName,
+            l.context as context,
+            l.goal as goal,
+            l.stem_knowledge_id as stemKnowledgeId,
+            sk.science as science,
+            sk.technology as technology,
+            sk.engineering as engineering,
+            sk.mathematics as mathematics,
+            l.evaluation_criteria_id as evaluationCriteriaId,
+            ec.preparation as preparation,
+            ec.implementation as implementation,
+            ec.presentation as presentation,
+            ec.production as production,
+            l.create_by as createBy,
+            u.first_name + ' ' + u.last_name as createByFullName,
+            l.create_at as createAt,
+            l.end_at as endAt,
+            l.update_at as updateAt,
+            l.status as status,
+            l.attachment_url as attachmentUrl
+        FROM lessons l
+        LEFT JOIN users u ON u.id = l.create_by
+        LEFT JOIN classes c ON c.id = l.class_id
+        LEFT JOIN semesters se ON se.id = c.semester_id
+        LEFT JOIN subjects s ON s.id = l.subject_id
+        LEFT JOIN lesson_levels ll ON ll.id = l.level_id
+        LEFT JOIN stem_knowledge sk on sk.id = l.stem_knowledge_id
+        LEFT JOIN evaluation_criterias ec on ec.id = l.evaluation_criteria_id
+        WHERE l.id = #{id}
+    </select>
+</mapper>

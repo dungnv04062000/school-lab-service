@@ -1,0 +1,40 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.EvaluationTeammateMapper">
+    <select id="getAllEvaluationTeammates"  resultMap="result" parameterType="map">
+        SELECT
+        g.id as groupId,
+        g.[name] as groupName,
+        g.lessonId as lessonId,
+        gm.member_id as toId,
+        u.first_name + ' ' + u.last_name as toName,
+        ISNULL(et.hard_working, 0) as hardWorking,
+        ISNULL(et.teamwork, 0) as teamwork,
+        ISNULL(et.skill, 0) as skill,
+        et.create_at as createAt,
+        et.update_at as updateAt
+        FROM
+        (
+        SELECT cg.id,
+        cg.[name],
+        cg.lesson_id as lessonId
+        FROM class_groups cg
+        LEFT JOIN group_members gm ON gm.group_id = cg.id
+        WHERE gm.member_id = #{from_id}
+        AND cg.lesson_id = #{lesson_id}
+        ) as g
+        LEFT JOIN group_members gm ON gm.group_id = g.id
+        LEFT JOIN users u ON u.id = gm.member_id
+        LEFT JOIN (
+        SELECT * FROM evaluation_teammates et
+        WHERE et.lesson_id = #{lesson_id}
+        AND et.from_id = #{from_id}
+        ) AS et ON et.to_id = gm.member_id
+        WHERE gm.member_id <![CDATA[<>]]> #{from_id}
+        ORDER BY gm.member_id
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.EvaluationTeammateDto" autoMapping="true">
+    </resultMap>
+</mapper>

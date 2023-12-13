@@ -1,0 +1,28 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.SemesterMapper">
+    <select id="getSemesters"  resultMap="result" parameterType="map">
+        SELECT
+            id,
+            name,
+            [year],
+            campus_id as campusId,
+            start_at as startAt,
+            create_at as createAt,
+            update_at as updateAt
+        FROM semesters
+        WHERE campus_id = #{campus_id}
+        <if test="year != null">
+            AND [year] = #{year}
+        </if>
+        <if test="name != null">
+            AND [name] LIKE CONCAT('%', #{name}, '%')
+        </if>
+        ORDER BY [year] DESC, create_at DESC
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.SemesterDto" autoMapping="true">
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,18 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.ClassGroupMapper">
+    <select id="getOwnerGroup"  resultType="com.schoollab.dto.ClassGroupDto" parameterType="map">
+        SELECT
+            cg.id,
+            cg.[name],
+            cg.class_id as classId,
+            cg.lesson_id as lessonId,
+            cg.create_at as createAt
+        FROM class_groups cg
+        LEFT JOIN group_members gm ON gm.group_id = cg.id
+        WHERE gm.member_id = #{student_id}
+        AND cg.lesson_id = #{lesson_id}
+    </select>
+
+</mapper>

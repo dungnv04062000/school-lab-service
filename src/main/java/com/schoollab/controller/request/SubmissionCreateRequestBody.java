@@ -1,0 +1,24 @@
+package com.schoollab.controller.request;
+
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.validation.constraints.NotNull;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+public class SubmissionCreateRequestBody {
+    @NotNull(message = "Mã dự án không được để trống")
+    private String lessonId;
+
+    private String content;
+
+    private MultipartFile file;
+
+}

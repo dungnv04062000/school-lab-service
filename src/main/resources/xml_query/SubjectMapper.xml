@@ -1,0 +1,37 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.SubjectMapper">
+    <select id="getAllSubject"  resultMap="result" parameterType="map">
+        SELECT
+            s.id,
+            s.name as name,
+            (
+                SELECT COUNT(*)
+                FROM lessons l
+                LEFT JOIN class_student cs on cs.class_id = l.class_id
+                LEFT JOIN users u on u.id = cs.student_id
+                WHERE l.subject_id = s.id and u.id = #{user_id}
+            ) as lessonCount
+        FROM subjects s
+        WHERE 1=1
+        <if test="subject_name != null">
+            AND s.name LIKE CONCAT('%', #{subject_name}, '%')
+        </if>
+        ORDER BY s.id ASC
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.SubjectDto" autoMapping="true">
+    </resultMap>
+
+    <select id="getOneSubject"  resultMap="result1" parameterType="map">
+        SELECT
+        s.id,
+        s.name as name
+        FROM subjects s
+        WHERE s.id = #{subject_id}
+    </select>
+
+    <resultMap id="result1" type="com.schoollab.dto.SubjectDto" autoMapping="true">
+    </resultMap>
+</mapper>

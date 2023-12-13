@@ -1,0 +1,84 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.NoteMapper">
+    <select id="getAll"  resultMap="result" parameterType="map">
+        SELECT
+            n.id,
+            n.user_id as userId,
+            l.title as title,
+            n.content,
+            n.create_at as createAt,
+            n.update_at as updateAt,
+            n.lesson_id as lessonId
+        FROM notes n
+        LEFT JOIN lessons l ON n.lesson_id = l.id
+        WHERE n.user_id = #{user_id}
+        <if test="lesson_title != null">
+            AND l.title LIKE CONCAT('%', #{lesson_title}, '%')
+        </if>
+        <if test="create_at_from != null">
+            AND n.create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND n.create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+        ORDER BY n.create_at
+        <if test="order_by == 'DESC'">
+            DESC
+        </if>
+        <if test="order_by != 'DESC'">
+            ASC
+        </if>
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <select id="countAllNote"  resultType="java.lang.Integer" parameterType="map">
+        SELECT
+        COUNT(n.id)
+        FROM notes n
+        LEFT JOIN lessons l ON n.lesson_id = l.id
+        WHERE n.user_id = #{user_id}
+        <if test="lesson_title != null">
+            AND l.title LIKE CONCAT('%', #{lesson_title}, '%')
+        </if>
+        <if test="create_at_from != null">
+            AND n.create_at <![CDATA[>=]]> #{create_at_from}
+        </if>
+        <if test="create_at_to != null">
+            AND n.create_at <![CDATA[<=]]> #{create_at_to}
+        </if>
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.NoteDto" autoMapping="true">
+    </resultMap>
+
+    <select id="getOne"  resultType="com.schoollab.dto.NoteDto" parameterType="map">
+        SELECT
+        n.id,
+        n.user_id as userId,
+        l.title as title,
+        n.content,
+        n.create_at as createAt,
+        n.update_at as updateAt,
+        n.lesson_id as lessonId
+        FROM notes n
+        LEFT JOIN lessons l ON n.lesson_id = l.id
+        WHERE n.id = #{id}
+    </select>
+
+    <select id="getOneByLessonId"  resultType="com.schoollab.dto.NoteDto" parameterType="map">
+        SELECT
+        n.id,
+        n.user_id as userId,
+        l.title as title,
+        n.content,
+        n.create_at as createAt,
+        n.update_at as updateAt,
+        n.lesson_id as lessonId
+        FROM notes n
+        LEFT JOIN lessons l ON n.lesson_id = l.id
+        WHERE n.user_id = #{user_id}
+              AND n.lesson_id = #{lesson_id}
+    </select>
+</mapper>

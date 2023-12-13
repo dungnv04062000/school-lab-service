@@ -1,0 +1,147 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.ClassStudentMapper">
+    <select id="getAll"  resultMap="result" parameterType="map">
+        SELECT
+            cs.id,
+            u.id as rollNumber,
+            u.first_name +' '+ u.last_name as fullName,
+            u.gender,
+            u.birth_date as birthDate,
+            u.image_url as imageUrl,
+            u.email,
+            u.phone_number as phoneNumber
+        FROM class_student cs
+        LEFT JOIN users u
+        on u.id = cs.student_id
+        WHERE cs.class_id = #{class_id}
+        <if test="student != null">
+            AND (u.id LIKE CONCAT('%', #{student}, '%') OR u.first_name +' '+ u.last_name LIKE CONCAT('%', #{student}, '%'))
+        </if>
+        <if test="gender != null">
+            AND u.gender = #{gender}
+        </if>
+        ORDER BY u.id ASC
+    </select>
+
+    <select id="getAllInCampus"  resultMap="result" parameterType="map">
+        SELECT
+            u.id,
+            u.first_name + ' ' + u.last_name as fullName,
+            u.gender,
+            u.birth_date as birthDate,
+            u.image_url as imageUrl,
+            u.email,
+            u.phone_number as phoneNumber,
+            u.campus_id as campusId,
+            c.name as className,
+            g.name as gradeName
+        FROM users u
+        LEFT JOIN accounts a ON a.user_id = u.id
+        LEFT JOIN user_role ur on u.id = ur.user_id
+        LEFT JOIN (
+        SELECT distinct cl.*, cs.student_id
+        FROM classes cl
+        LEFT JOIN class_student cs on cl.id = cs.class_id
+        WHERE cl.semester_id = #{semester_id}
+        ) c on c.student_id = u.id
+        LEFT JOIN grades g on g.id = c.grade_id
+        WHERE ur.role_id = #{role_id}
+        AND a.is_verify = 1
+        <if test="campus_id != null">
+            AND u.campus_id = #{campus_id}
+        </if>
+        <if test="grade_id != null">
+            AND g.id = #{grade_id}
+        </if>
+        <if test="gender != null">
+            AND u.gender = #{gender}
+        </if>
+        <if test="student != null">
+            AND (u.id LIKE CONCAT('%', #{student}, '%') OR u.first_name +' '+ u.last_name LIKE CONCAT('%', #{student}, '%'))
+        </if>
+        <if test="class_name != null">
+            AND c.name LIKE CONCAT('%', #{class_name}, '%')
+        </if>
+        ORDER BY u.id ASC
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <select id="countAllInCampus"  resultType="java.lang.Integer" parameterType="map">
+        SELECT COUNT(*)
+        FROM users u
+        LEFT JOIN accounts a ON a.user_id = u.id
+        LEFT JOIN user_role ur on u.id = ur.user_id
+        LEFT JOIN class_student cs on u.id = cs.student_id
+        LEFT JOIN (
+        SELECT * FROM classes
+        WHERE semester_id = #{semester_id}
+        ) c on c.id = cs.class_id
+        LEFT JOIN grades g on g.id = c.grade_id
+        WHERE ur.role_id = #{role_id}
+        AND a.is_verify = 1
+        <if test="campus_id != null">
+            AND u.campus_id = #{campus_id}
+        </if>
+        <if test="gender != null">
+            AND u.gender = #{gender}
+        </if>
+        <if test="class_name != null">
+            AND c.name LIKE CONCAT('%', #{class_name}, '%')
+        </if>
+        <if test="grade_id != null">
+            AND g.id = #{grade_id}
+        </if>
+        <if test="student != null">
+            AND (u.id LIKE CONCAT('%', #{student}, '%') OR u.first_name +' '+ u.last_name LIKE CONCAT('%', #{student}, '%'))
+        </if>
+    </select>
+
+    <select id="getAllByCampusForRootAdmin"  resultMap="result" parameterType="map">
+        SELECT
+            u.id,
+            u.first_name + ' ' + u.last_name as fullName,
+            u.gender,
+            u.birth_date as birthDate,
+            u.image_url as imageUrl,
+            u.email,
+            u.phone_number as phoneNumber,
+            u.campus_id as campusId,
+            a.is_verify as isVerify
+        FROM users u
+        LEFT JOIN accounts a ON a.user_id = u.id
+        LEFT JOIN user_role ur on u.id = ur.user_id
+        WHERE ur.role_id = #{role_id}
+        <if test="campus_id != null">
+            AND u.campus_id = #{campus_id}
+        </if>
+        <if test="gender != null">
+            AND u.gender = #{gender}
+        </if>
+        <if test="student != null">
+            AND (u.id LIKE CONCAT('%', #{student}, '%') OR u.first_name +' '+ u.last_name LIKE CONCAT('%', #{student}, '%'))
+        </if>
+        ORDER BY u.id ASC
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <select id="countAllByCampusForRootAdmin"  resultType="java.lang.Integer" parameterType="map">
+        SELECT COUNT(*)
+        FROM users u
+        LEFT JOIN user_role ur on u.id = ur.user_id
+        WHERE ur.role_id = #{role_id}
+        <if test="campus_id != null">
+            AND u.campus_id = #{campus_id}
+        </if>
+        <if test="gender != null">
+            AND u.gender = #{gender}
+        </if>
+        <if test="student != null">
+            AND (u.id LIKE CONCAT('%', #{student}, '%') OR u.first_name +' '+ u.last_name LIKE CONCAT('%', #{student}, '%'))
+        </if>
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.StudentInClassDto" autoMapping="true">
+    </resultMap>
+</mapper>

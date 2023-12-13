@@ -1,0 +1,161 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.EvaluationMapper">
+    <select id="getAllStudentGrade"  resultMap="result" parameterType="map">
+        SELECT
+            s.*,
+            ISNULL(et.hardWorking * 2, 0) as hardWorking,
+            ISNULL(et.teamwork * 2, 0) as teamwork,
+            ISNULL(et.skill * 2, 0) as skill,
+            ISNULL(eg.preparation * 2, 0) as preparation,
+            ISNULL(eg.implementation * 2, 0) as implementation,
+            ISNULL(eg.presentation * 2, 0) as presentation,
+            ISNULL(eg.production * 2, 0) as production,
+            (ISNULL(eg.preparation * 2, 0) * ISNULL(ec.preparation, 25)
+                + ISNULL(eg.implementation * 2, 0) * ISNULL(ec.implementation, 25)
+                + ISNULL(eg.presentation * 2, 0) * ISNULL(ec.presentation, 25)
+                + ISNULL(eg.production * 2, 0) * ISNULL(ec.production, 25)) / 100 as total,
+            (SELECT COUNT(*)
+             FROM notes n
+                      LEFT JOIN experiments e ON e.note_id = n.id
+                      LEFT JOIN experiment_detail ed ON ed.experiment_id = e.id
+             WHERE n.[user_id] = s.studentId
+               AND n.lesson_id = #{lesson_id}
+               AND ed.id is not null) as experimentCount,
+            e.grade as grade
+        FROM
+            (
+                SELECT distinct
+                    cs.student_id as studentId,
+                    u.first_name + ' ' + u.last_name as studentName,
+                    cg.id as groupId,
+                    cg.name as groupName,
+                    l.evaluation_criteria_id
+                FROM class_student cs
+                         LEFT JOIN lessons l ON l.class_id = cs.class_id
+                         LEFT JOIN users u ON u.id = cs.student_id
+                         LEFT JOIN group_members gm ON gm.member_id = cs.student_id
+                         LEFT JOIN class_groups cg ON cg.id = gm.group_id
+                WHERE cg.lesson_id = #{lesson_id}
+                AND l.id = #{lesson_id}
+            ) as s
+                LEFT JOIN
+            (
+                SELECT et.to_id,
+                       ROUND(AVG(CAST(et.hard_working AS float)), 2) as hardWorking,
+                       ROUND(AVG(CAST(et.teamwork AS float)), 2)  as teamwork,
+                       ROUND(AVG(CAST(et.skill AS float)), 2)  as skill
+                FROM evaluation_teammates et
+                WHERE et.lesson_id = #{lesson_id}
+                GROUP BY et.to_id
+            ) as et ON et.to_id = s.studentId
+                LEFT JOIN
+            (
+                SELECT eg.group_id,
+                       ROUND(AVG(CAST(eg.preparation AS float)), 2) as preparation,
+                       ROUND(AVG(CAST(eg.implementation AS float)), 2)  as implementation,
+                       ROUND(AVG(CAST(eg.presentation AS float)), 2)  as presentation,
+                       ROUND(AVG(CAST(eg.production AS float)), 2)  as production
+                FROM evaluation_groups eg
+                WHERE eg.lesson_id = #{lesson_id}
+                GROUP BY eg.group_id
+            ) as eg ON eg.group_id = s.groupId
+                LEFT JOIN (
+                SELECT
+                    e.to_id,
+                    e.grade
+                FROM evaluations e
+                WHERE e.lesson_id = #{lesson_id}
+            ) as e ON e.to_id = s.studentId
+        LEFT JOIN evaluation_criterias ec ON ec.id = s.evaluation_criteria_id
+        ORDER BY s.groupName, s.studentId
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.LessonGradeDto" autoMapping="true">
+    </resultMap>
+
+    <select id="getOwnerGradeStatistic"  resultMap="result1" parameterType="map">
+        WITH result as
+        (
+            SELECT
+                ROW_NUMBER() OVER(ORDER BY t.createAt ASC) AS rowNumber,
+                t.rollNumber,
+                t.createAt,
+                SUM(t.grade) AS dateGrade,
+                COUNT(t.grade) AS dateAmount
+            FROM(
+                SELECT
+                    e.to_id as rollNumber,
+                    e.grade,
+                    CONVERT(DATE, ISNULL(e.update_at, e.create_at)) AS createAt
+                FROM evaluations e
+                    LEFT JOIN lessons l ON l.id = e.lesson_id
+                    LEFT JOIN classes c ON c.id = l.class_id
+                    LEFT JOIN semesters se ON se.id = c.semester_id
+                WHERE e.to_id = #{user_id}
+                AND se.id = #{semester_id}
+                AND l.subject_id = #{subject_id}
+            ) AS t
+            GROUP BY t.rollNumber, t.createAt
+            )
+        SELECT
+            d.createAt AS x,
+            (SUM(d.dateGrade) OVER (ORDER BY d.createAt)) / d.amount AS y
+        FROM (
+            SELECT r1.*, (SELECT SUM(dateAmount) FROM result r2 WHERE r2.rowNumber <![CDATA[<=]]> r1.rowNumber) as amount
+            FROM result r1
+        ) as d
+    </select>
+
+    <resultMap id="result1" type="com.schoollab.dto.OwnerGradeStatisticDto" autoMapping="true">
+    </resultMap>
+
+    <select id="getFinalGrades"  resultMap="result2" parameterType="map">
+        WITH result as
+        (
+        SELECT
+        ROW_NUMBER() OVER(ORDER BY t.createAt ASC) AS rowNumber,
+        t.rollNumber,
+        t.createAt,
+        SUM(t.grade) AS dateGrade,
+        COUNT(t.grade) AS dateAmount
+        FROM(
+        SELECT
+        e.to_id as rollNumber,
+        e.grade,
+        CONVERT(DATE, ISNULL(e.update_at, e.create_at)) AS createAt
+        FROM evaluations e
+        LEFT JOIN lessons l ON l.id = e.lesson_id
+        LEFT JOIN classes c ON c.id = l.class_id
+        WHERE e.to_id = #{user_id}
+        AND c.id = #{class_id}
+        AND l.subject_id = #{subject_id}
+        ) AS t
+        GROUP BY t.rollNumber, t.createAt
+        )
+
+
+        SELECT TOP 1
+        d.createAt AS x,
+        (SUM(d.dateGrade) OVER (ORDER BY d.createAt)) / d.amount AS y,
+        (SELECT COUNT(*)
+        FROM experiment_detail ed
+        LEFT JOIN experiments e ON e.id = ed.experiment_id
+        LEFT JOIN notes n ON n.id = e.note_id
+        LEFT JOIN lessons l ON l.id = n.lesson_id
+        WHERE l.class_id = #{class_id}
+        AND n.user_id = #{user_id}
+        AND l.subject_id = #{subject_id}
+        ) as experimentCount
+        FROM (
+        SELECT r1.*, (SELECT SUM(dateAmount) FROM result r2 WHERE r2.rowNumber <![CDATA[<=]]> r1.rowNumber) as amount
+        FROM result r1
+        ) as d
+
+        ORDER BY x DESC
+    </select>
+
+    <resultMap id="result2" type="com.schoollab.dto.OwnerGradeStatisticDto" autoMapping="true">
+    </resultMap>
+</mapper>

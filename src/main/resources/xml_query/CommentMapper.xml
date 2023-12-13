@@ -1,0 +1,65 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.CommentMapper">
+    <select id="getComments"  resultMap="result" parameterType="map">
+        SELECT
+            c.id,
+            c.lesson_id AS lessonId,
+            c.from_id AS fromId,
+            u.first_name + ' ' + u.last_name as fromName,
+            u.image_url as fromAvatarUrl,
+            CASE
+                WHEN c.from_id = #{from_id} THEN 1 ELSE 0 END AS isOwnerComment,
+            c.comment_id AS commentId,
+            c.content,
+            c.create_at AS createAt,
+            c.update_at AS updateAt
+        FROM comments c
+        LEFT JOIN users u ON u.id = c.from_id
+        WHERE c.comment_id is null
+          AND c.lesson_id = #{lesson_id}
+        ORDER BY c.create_at DESC
+        OFFSET (#{page} - 1) * #{row_number} ROWS FETCH NEXT #{row_number} ROWS ONLY
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.CommentDto" autoMapping="true">
+    </resultMap>
+
+    <select id="getReplies"  resultMap="result1" parameterType="map">
+        SELECT
+            c.id,
+            c.lesson_id AS lessonId,
+            c.from_id AS fromId,
+            u.first_name + ' ' + u.last_name as fromName,
+            u.image_url as fromAvatarUrl,
+            CASE
+                WHEN c.from_id = #{from_id} THEN 1 ELSE 0 END AS isOwnerComment,
+            c.comment_id AS commentId,
+            c.content,
+            c.create_at AS createAt,
+            c.update_at AS updateAt
+        FROM comments c
+        LEFT JOIN users u ON u.id = c.from_id
+        WHERE c.comment_id = #{comment_id}
+        ORDER BY c.create_at DESC
+    </select>
+
+    <resultMap id="result1" type="com.schoollab.dto.CommentDto" autoMapping="true">
+    </resultMap>
+
+    <select id="countComments"  resultType="java.lang.Integer" parameterType="map">
+        SELECT
+            COUNT(c.id)
+        FROM comments c
+        WHERE c.lesson_id = #{lesson_id}
+    </select>
+
+    <select id="countDirectComments"  resultType="java.lang.Integer" parameterType="map">
+        SELECT
+            COUNT(c.id)
+        FROM comments c
+        WHERE c.comment_id is null
+          AND c.lesson_id = #{lesson_id}
+    </select>
+</mapper>

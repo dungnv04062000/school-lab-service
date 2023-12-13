@@ -1,0 +1,75 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.schoollab.mapper.ClassMapper">
+    <select id="getAll"  resultMap="result" parameterType="map">
+        SELECT
+            c.id,
+            c.name,
+            ca.id as campusId,
+            ca.name as campusName,
+            s.id as semesterId,
+            s.name as semesterName,
+            s.[year] as [year],
+            g.id as gradeId,
+            g.name as gradeName,
+            c.form_teacher_id as formTeacherId,
+            u.first_name + ' ' + u.last_name as formTeacherName,
+            (SELECT COUNT (id) FROM class_student cs where cs.class_id = c.id) as studentCount,
+            c.create_at as createAt
+        FROM classes c
+        LEFT JOIN users u ON u.id = c.form_teacher_id
+        LEFT JOIN campuses ca ON ca.id = c.campus_id
+        LEFT JOIN semesters s ON s.id = c.semester_id
+        LEFT JOIN grades g ON g.id = c.grade_id
+
+        <if test="teacher_id != null">
+            RIGHT JOIN class_teacher ct ON ct.class_id = c.id
+        </if>
+        WHERE c.campus_id = #{campus_id}
+          AND c.semester_id = #{semester_id}
+        <if test="grade_id != null">
+            AND c.grade_id = #{grade_id}
+        </if>
+        <if test="teacher_id != null">
+            AND ct.teacher_id = #{teacher_id}
+        </if>
+        <if test="class_name != null">
+            AND c.name LIKE CONCAT('%', #{class_name}, '%')
+        </if>
+        <if test="form_teacher != null">
+            AND (u.id LIKE CONCAT('%', #{form_teacher}, '%') OR u.first_name + ' ' + u.last_name LIKE CONCAT('%', #{form_teacher}, '%'))
+        </if>
+        ORDER BY c.name ASC
+    </select>
+
+    <resultMap id="result" type="com.schoollab.dto.ClassDto" autoMapping="true">
+    </resultMap>
+
+    <select id="getOne"  resultMap="result1" parameterType="map">
+        SELECT
+        c.id,
+        c.name,
+        ca.id as campusId,
+        ca.name as campusName,
+        s.id as semesterId,
+        s.name as semesterName,
+        s.[year] as [year],
+        g.id as gradeId,
+        g.name as gradeName,
+        c.form_teacher_id as formTeacherId,
+        u.first_name + ' ' + u.last_name as formTeacherName,
+        (SELECT COUNT (id) FROM class_student cs where cs.class_id = c.id) as studentCount,
+        c.create_at as createAt,
+               c.update_at as updateAt
+        FROM classes c
+        LEFT JOIN users u ON u.id = c.form_teacher_id
+        LEFT JOIN campuses ca ON ca.id = c.campus_id
+        LEFT JOIN semesters s ON s.id = c.semester_id
+        LEFT JOIN grades g ON g.id = c.grade_id
+        WHERE c.id = #{class_id}
+    </select>
+
+    <resultMap id="result1" type="com.schoollab.dto.ClassDto" autoMapping="true">
+    </resultMap>
+</mapper>
